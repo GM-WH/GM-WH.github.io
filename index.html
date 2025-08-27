@@ -26,89 +26,41 @@
         <!-- Rest of your website content -->
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+<script>
+document.addEventListener('DOMContentLoaded', () => {
     const loadingScreen = document.getElementById('loadingScreen');
-    const video = document.querySelector('video');
-    const videoContainer = document.querySelector('.video-background');
-    
-    let videoLoaded = false;
-    let fallbackActivated = false;
+    const content = document.querySelector('.content'); // your page content
 
-    function activateFallback() {
-        if (fallbackActivated) return;
-        fallbackActivated = true;
-        console.log('Activating fallback background');
-        if (video) {
-            video.style.display = 'none';
-            video.removeAttribute('autoplay');
-        }
-    }
+    // Hide main content initially
+    content.style.display = 'none';
 
+    // Function to hide loader and show content
     function hideLoading() {
         loadingScreen.classList.add('loaded');
         setTimeout(() => {
             loadingScreen.remove();
-        }, 500);
+            content.style.display = 'block'; // show main content
+        }, 500); // matches CSS fade-out
     }
 
-    function handleVideoSuccess() {
-        if (videoLoaded || fallbackActivated) return;
-        videoLoaded = true;
-        console.log('Video successfully loaded');
-        if (video) video.style.opacity = 1;
-        hideLoading();
-    }
-
+    // If you have a video background, wait for it
+    const video = document.querySelector('video');
     if (video) {
-        // Set initial video state
-        video.setAttribute('data-state', 'loading');
         video.style.opacity = 0;
-
-        // Better browser support check
-        const canPlayMP4 = video.canPlayType('video/mp4') !== '';
-        
-        if (canPlayMP4) {
-            console.log('Browser supports MP4 video');
-            
-            // Event listeners
-            video.addEventListener('loadeddata', handleVideoSuccess);
-            video.addEventListener('canplay', handleVideoSuccess);
-            video.addEventListener('error', () => {
-                console.error('Video loading error');
-                activateFallback();
-                hideLoading();
-            });
-
-            // Attempt to play
-            const playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                    console.warn('Autoplay blocked');
-                    activateFallback();
-                    hideLoading();
-                });
-            }
-        } else {
-            console.log('Browser does NOT support MP4');
-            activateFallback();
+        video.addEventListener('loadeddata', () => {
+            video.style.opacity = 1;
             hideLoading();
+        });
+        video.addEventListener('error', hideLoading);
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(hideLoading);
         }
     } else {
-        console.error('No video element found');
-        activateFallback();
-        hideLoading();
+        // No video: just hide loader after short delay
+        window.addEventListener('load', hideLoading);
+        setTimeout(hideLoading, 5000); // fallback in case 'load' doesn't fire
     }
-
-    // Fallback timeout
-    setTimeout(() => {
-        if (!videoLoaded && !fallbackActivated) {
-            console.warn('Loading timeout reached');
-            activateFallback();
-            hideLoading();
-        }
-    }, 5000);
 });
 </script>
 
